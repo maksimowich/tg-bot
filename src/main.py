@@ -3,7 +3,7 @@ from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from src.handlers import start, category #, cart
+from src.handlers import start, category, subcategory
 from src.core.config import app_settings
 
 
@@ -18,7 +18,7 @@ async def main():
 
     dp.include_router(start.router)
     dp.include_router(category.router)
-    # dp.include_router(cart.router)
+    dp.include_router(subcategory.router)
 
     await bot.delete_webhook()
     await bot.session.close()

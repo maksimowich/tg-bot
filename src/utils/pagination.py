@@ -9,7 +9,7 @@ def get_keyboard_with_pagination_func(
         items: list[dict],
 ) -> Callable:
     def get_keyboard_with_pagination(
-            page: int = 0,
+            page: int,
             page_size: int = 3,
     ) -> InlineKeyboardMarkup:
         keyboard = InlineKeyboardBuilder()
@@ -17,6 +17,8 @@ def get_keyboard_with_pagination_func(
         start = page * page_size
         end = start + page_size
         paginated_items = items[start:end]
+        # print(page)
+        # print(paginated_items)
 
         for item in paginated_items:
             keyboard.add(
