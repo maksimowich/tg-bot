@@ -1,8 +1,10 @@
 import re
 
 from aiogram import Router, types
+from aiogram.fsm.context import FSMContext
 
 from src.keyboards.subcategories_keyboard import subcategories, get_category_subcategories_keyboard_func
+from src.keyboards.products_keyboard import show_products
 
 router = Router()
 
@@ -30,7 +32,10 @@ async def handle_page(callback: types.CallbackQuery):
 
 
 @router.callback_query(lambda c: re.match(r"category_\d+_subcategory_\d+$", c.data))
-async def handle_subcategory(callback: types.CallbackQuery):
+async def handle_subcategory(
+        callback: types.CallbackQuery,
+        state: FSMContext,
+):
     match = re.match(r"category_(\d+)_subcategory_(\d+)", callback.data)
     if match:
         subcategory_id = int(match.group(2))
@@ -41,7 +46,4 @@ async def handle_subcategory(callback: types.CallbackQuery):
 
     subcategory = next((s for s in subcategories if s["id"] == subcategory_id), None)
     if subcategory:
-        await callback.message.answer(
-            f"Вы выбрали: {subcategory['name']}"
-        )
-    await callback.answer()
+        await show_products(callback.message, state)
