@@ -17,6 +17,6 @@ async def add_to_cart(
     await state.set_state(CartState.waiting_for_quantity)
 
     await callback.message.answer(
-        f"Товар {product_id} добавлен в корзину. Введите количество:"
+        f"Товар добавлен в корзину. Введите количество:"
     )
     await callback.answer()

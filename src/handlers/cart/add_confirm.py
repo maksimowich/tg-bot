@@ -28,6 +28,6 @@ async def confirm_add(
 
     await callback.message.delete()
     await callback.message.answer(
-        f"Товар {product_id} в количестве {quantity} шт. добавлен в корзину!"
+        f"Товар в количестве {quantity} шт. добавлен в корзину!"
     )
     await callback.answer()

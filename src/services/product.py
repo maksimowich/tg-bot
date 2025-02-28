@@ -1,4 +1,3 @@
-from math import ceil
 from typing import Sequence
 from uuid import UUID
 
@@ -43,3 +42,16 @@ class ProductService:
                 (total_products // page_size) + (1 if total_products % page_size != 0 else 0)
         )
         return total_pages
+
+    @staticmethod
+    async def get_product_name(
+            session: AsyncSession,
+            product_id: UUID,
+    ) -> str | None:
+        query = (
+            select(ProductOrm)
+            .where(ProductOrm.id == product_id)
+        )
+        result = await session.execute(query)
+        product = result.scalar()
+        return product.name if product else None

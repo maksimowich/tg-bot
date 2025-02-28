@@ -22,4 +22,3 @@ async def clear_cart(
     await callback.message.delete()
 
     await callback.message.answer("Корзина очищена.")
-    await view_cart(callback, session)

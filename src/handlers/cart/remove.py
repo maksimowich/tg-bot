@@ -24,5 +24,5 @@ async def remove_from_cart(
 
     await callback.message.delete()
 
-    await callback.message.answer(f"Товар {product_id} удалён из корзины!")
+    await callback.message.answer(f"Товар удалён из корзины!")
     await view_cart(callback, session)
