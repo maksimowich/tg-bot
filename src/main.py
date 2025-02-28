@@ -11,6 +11,7 @@ from src.handlers import (
     product,
     cart,
     order,
+    faq,
 )
 from src.core.config import app_settings
 from src.core.db_helper import db_helper
@@ -38,6 +39,7 @@ async def main():
     dp.include_router(product.router)
     dp.include_router(cart.router)
     dp.include_router(order.router)
+    dp.include_router(faq.router)
 
     await bot.delete_webhook()
     await bot.session.close()
