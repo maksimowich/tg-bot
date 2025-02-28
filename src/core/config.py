@@ -1,17 +1,22 @@
-from functools import lru_cache
 from pathlib import Path
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+uuid_regex = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 
 
 # class ServiceConfig(BaseModel):
 #     host: str
 #     port: int
 
-
 class TgConfig(BaseModel):
     bot_token: str
+
+
+class YookassaConfig(BaseModel):
+    account_id: str
+    secret_key: str
 
 
 class PostgresConfig(BaseModel):
@@ -35,9 +40,19 @@ class PostgresConfig(BaseModel):
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
 
+class FormsConfig(BaseModel):
+    categories_page_size: int = 3
+    subcategories_page_size: int = 5
+    products_page_size: int = 4
+
+
 class Settings(BaseSettings):
     tg: TgConfig
+    yookassa: YookassaConfig
     postgres: PostgresConfig
+    forms: FormsConfig = FormsConfig()
+
+    excel_filepath: str
 
     model_config = SettingsConfigDict(
         env_file=(
@@ -51,8 +66,3 @@ class Settings(BaseSettings):
 
 
 app_settings = Settings()
-
-
-@lru_cache
-def get_settings():
-    return app_settings

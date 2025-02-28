@@ -1,20 +1,45 @@
-from src.utils.pagination import get_keyboard_with_pagination_func
+from typing import Sequence
 
-categories = [
-    {"id": 1, "name": "Категория 1"},
-    {"id": 2, "name": "Категория 2"},
-    {"id": 3, "name": "Категория 3"},
-    {"id": 4, "name": "Категория 4"},
-    {"id": 5, "name": "Категория 5"},
-    {"id": 6, "name": "Категория 6"},
-    {"id": 7, "name": "Категория 7"},
-    {"id": 8, "name": "Категория 8"},
-    {"id": 9, "name": "Категория 9"},
-    {"id": 10, "name": "Категория 10"},
-]
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from loguru import logger
+
+from src.db import CategoryOrm
 
 
-get_categories_keyboard = get_keyboard_with_pagination_func(
-    callback_data_prefix="category",
-    items=categories,
-)
+def get_categories_keyboard(
+        categories: Sequence[CategoryOrm],
+        page: int,
+        total_pages: int,
+) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+
+    for category in categories:
+        logger.info(f"category_{category.id}")
+        keyboard.add(
+            InlineKeyboardButton(
+                text=category.name,
+                callback_data=f"category_{category.id}"
+            )
+        )
+
+    pagination_buttons = []
+    if page > 0:
+        pagination_buttons.append(
+            InlineKeyboardButton(
+                text="⬅️ Назад",
+                callback_data=f"category_page_{page - 1}"
+            )
+        )
+    if page < (total_pages - 1):
+        pagination_buttons.append(
+            InlineKeyboardButton(
+                text="Вперед ➡️",
+                callback_data=f"category_page_{page + 1}",
+            )
+        )
+
+    if pagination_buttons:
+        keyboard.row(*pagination_buttons)
+
+    return keyboard.as_markup()

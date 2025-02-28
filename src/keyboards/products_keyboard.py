@@ -1,48 +1,65 @@
+from uuid import UUID
+
 from aiogram import types
-from aiogram.types import InputFile, InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types.input_file import FSInputFile
+from sqlalchemy.ext.asyncio import AsyncSession
 
-PAGE_SIZE = 3
+from src.core.config import app_settings
+from src.services import ProductService
 
 
 async def show_products(
         message: types.Message,
         state: FSMContext,
+        session: AsyncSession,
+        subcategory_id: UUID | None,
 ):
-    products = [
-        {"id": 1, "name": "Товар 1", "price": 100, "photo": "../xxx.jpg"},
-        {"id": 2, "name": "Товар 2", "price": 200, "photo": "../xxx.jpg"},
-        {"id": 3, "name": "Товар 3", "price": 200, "photo": "../xxx.jpg"},
-        {"id": 4, "name": "Товар 4", "price": 200, "photo": "../xxx.jpg"},
-        {"id": 5, "name": "Товар 5", "price": 200, "photo": "../xxx.jpg"},
-        {"id": 6, "name": "Товар 6", "price": 200, "photo": "../xxx.jpg"},
-        {"id": 7, "name": "Товар 7", "price": 200, "photo": "../xxx.jpg"},
-        {"id": 8, "name": "Товар 8", "price": 200, "photo": "../xxx.jpg"},
-        {"id": 9, "name": "Товар 9", "price": 200, "photo": "../xxx.jpg"},
-        {"id": 10, "name": "Товар 10", "price": 200, "photo": "../xxx.jpg"},
-    ]
-
     data = await state.get_data()
     current_page = data.get("current_page", 0)
+    if subcategory_id is None:
+        subcategory_id = data.get("subcategory_id")
+    else:
+        await state.update_data(subcategory_id=subcategory_id)
 
-    start = current_page * PAGE_SIZE
-    end = start + PAGE_SIZE
-    page_products = products[start:end]
+    page_size = app_settings.forms.products_page_size
+    offset = current_page * page_size
+    limit = page_size
+    page_products = await ProductService.get_products(
+        session=session,
+        subcategory_id=subcategory_id,
+        offset=offset,
+        limit=limit,
+    )
+    if len(page_products) == 0:
+        await message.answer("В выбранной подкатегории нет товаров.")
+        return
+
+    total_pages = await ProductService.get_total_pages(
+        session=session,
+        subcategory_id=subcategory_id,
+        page_size=page_size,
+    )
 
     for product in page_products:
-        text = f"📦 {product['name']}\n💰 {product['price']} руб."
+        text = f"📦 {product.name}\n💰 {product.price} руб."
         builder = InlineKeyboardBuilder()
         builder.button(
             text="🛒 Положить в корзину",
-            callback_data=f"add_to_cart_product_{product['id']}",
+            callback_data=f"add_to_cart_product_{product.id}",
         )
-        await message.answer_photo(
-            photo=FSInputFile(product["photo"]),
-            caption=text,
-            reply_markup=builder.as_markup()
-        )
+        if product.photo_link:
+            await message.answer_photo(
+                photo=FSInputFile(product.photo_link),
+                caption=text,
+                reply_markup=builder.as_markup()
+            )
+        else:
+            await message.answer(
+                text=text,
+                reply_markup=builder.as_markup()
+            )
 
     builder = InlineKeyboardBuilder()
     if current_page > 0:
@@ -50,16 +67,13 @@ async def show_products(
             text="⬅️ Назад",
             callback_data="prev_products_page",
         )
-    if end < len(products):
+    if current_page < (total_pages - 1):
         builder.button(
             text="Вперёд ➡️",
             callback_data="next_products_page",
         )
 
-    total_pages = (
-        (len(products) // PAGE_SIZE) + (1 if len(products) % PAGE_SIZE != 0 else 0)
-    )
     await message.answer(
-        f"Страница {current_page + 1} из {total_pages}. Выберите товар:",
+        f"Страница {current_page + 1} из {total_pages}.",
         reply_markup=builder.as_markup(),
     )

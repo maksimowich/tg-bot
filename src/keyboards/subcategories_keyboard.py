@@ -1,37 +1,83 @@
-from typing import Callable
+from typing import Sequence
+from uuid import UUID
 
-from src.utils.pagination import get_keyboard_with_pagination_func
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from sqlalchemy.ext.asyncio import AsyncSession
 
-subcategories = [
-    {"id": 1, "category_id": 1, "name": "Подкатегория 1"},
-    {"id": 2, "category_id": 1, "name": "Подкатегория 2"},
-    {"id": 3, "category_id": 1, "name": "Подкатегория 3"},
-    {"id": 4, "category_id": 1, "name": "Подкатегория 4"},
-    {"id": 5, "category_id": 1, "name": "Подкатегория 5"},
-    {"id": 6, "category_id": 1, "name": "Подкатегория 6"},
-    {"id": 7, "category_id": 1, "name": "Подкатегория 7"},
-    {"id": 8, "category_id": 1, "name": "Подкатегория 8"},
-    {"id": 9, "category_id": 2, "name": "Подкатегория 9"},
-    {"id": 10, "category_id": 2, "name": "Подкатегория 10"},
-]
+from src.core.config import app_settings
+from src.db import SubcategoryOrm
+from src.services import SubcategoryService
 
 
-def get_category_subcategories(
-        category_id: int,
-) -> list[dict]:
-    return [
-        subcategory for subcategory in subcategories
-        if subcategory["category_id"] == category_id
-    ]
+def get_subcategories_keyboard(
+        subcategories: Sequence[SubcategoryOrm],
+        category_id: UUID,
+        page: int,
+        total_pages: int,
+) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+
+    for subcategory in subcategories:
+        keyboard.add(
+            InlineKeyboardButton(
+                text=subcategory.name,
+                callback_data=f"subcategory_{subcategory.id}"
+            )
+        )
+
+    pagination_buttons = []
+    if page > 0:
+        pagination_buttons.append(
+            InlineKeyboardButton(
+                text="⬅️ Назад",
+                callback_data=f"category_{category_id}_subcategory_page_{page - 1}"
+            )
+        )
+    if page < (total_pages - 1):
+        pagination_buttons.append(
+            InlineKeyboardButton(
+                text="Вперед ➡️",
+                callback_data=f"category_{category_id}_subcategory_page_{page + 1}",
+            )
+        )
+
+    if pagination_buttons:
+        keyboard.row(*pagination_buttons)
+
+    return keyboard.as_markup()
 
 
-def get_category_subcategories_keyboard_func(
-        category_id: int,
-) -> Callable:
-    category_subcategories = get_category_subcategories(category_id)
-
-    get_subcategories_keyboard = get_keyboard_with_pagination_func(
-        callback_data_prefix=f"category_{category_id}_subcategory",
-        items=category_subcategories,
+async def construct_subcategories_keyboard(
+        callback: CallbackQuery,
+        session: AsyncSession,
+        category_id: UUID,
+        page: int,
+) -> None:
+    page_size = app_settings.forms.subcategories_page_size
+    subcategories = await SubcategoryService.get_subcategories(
+        session=session,
+        category_id=category_id,
+        page=page,
+        page_size=page_size,
     )
-    return get_subcategories_keyboard
+    if len(subcategories) == 0:
+        await callback.message.answer("В выбранной категории нет подкатегорий.")
+        return
+
+    total_pages = await SubcategoryService.get_total_pages(
+        session=session,
+        category_id=category_id,
+        page_size=page_size,
+    )
+    subcategories_keyboard = get_subcategories_keyboard(
+        subcategories=subcategories,
+        category_id=category_id,
+        page=page,
+        total_pages=total_pages,
+    )
+    if subcategories_keyboard:
+        await callback.message.edit_text(
+            "Список подкатегорий:",
+            reply_markup=subcategories_keyboard,
+        )
