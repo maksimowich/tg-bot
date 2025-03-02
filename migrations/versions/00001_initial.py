@@ -73,6 +73,17 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         schema=schema,
     )
+    op.create_table(
+        "order",
+        sa.Column("creation_dttm", sa.DateTime(), nullable=False),
+        sa.Column("user_id", sa.String(length=255), nullable=False),
+        sa.Column("address", sa.String(), nullable=False),
+        sa.Column("payment_amount", sa.Numeric(precision=19, scale=2), nullable=False),
+        sa.Column("payment_link", sa.String(), nullable=False),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.PrimaryKeyConstraint("id"),
+        schema=schema,
+    )
     # ### end Alembic commands ###
 
 
@@ -82,5 +93,6 @@ def downgrade() -> None:
     op.drop_table("product", schema=schema)
     op.drop_table("subcategory", schema=schema)
     op.drop_table("category", schema=schema)
+    op.drop_table("order", schema=schema)
     op.execute(f"DROP SCHEMA {schema} CASCADE;")
     # ### end Alembic commands ###

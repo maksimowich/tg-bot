@@ -28,6 +28,7 @@ ORDER_ITEMS_TITLE = [
 
 async def save_order(
         order_id: UUID,
+        creation_dttm: datetime,
         payment_link: str,
         user_id: str,
         address: str,
@@ -56,11 +57,11 @@ async def save_order(
         for cell in items_sheet[1]:
             cell.font = Font(bold=True)
 
-    creation_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    creation_dttm_str = creation_dttm.strftime("%Y-%m-%d %H:%M:%S")
 
     orders_sheet.append([
         str(order_id),
-        creation_datetime,
+        creation_dttm_str,
         user_id,
         address,
         payment_amount,

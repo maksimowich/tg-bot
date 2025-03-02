@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.create_payment import create_payment
 from src.core.save_order import save_order
-from src.services import CartService
+from src.services import CartService, OrderService
 
 router = Router()
 
@@ -53,12 +53,21 @@ async def process_address(
         payment_amount=payment_amount,
     )
 
-    await save_order(
+    order = await OrderService.add_order(
+        session=session,
         order_id=order_id,
-        payment_link=payment_link,
         user_id=user_id,
         address=address,
         payment_amount=payment_amount,
+        payment_link=payment_link,
+    )
+    await save_order(
+        order_id=order_id,
+        creation_dttm=order.creation_dttm,
+        user_id=user_id,
+        address=address,
+        payment_amount=payment_amount,
+        payment_link=payment_link,
         cart_items=cart_items,
     )
     await message.answer(
