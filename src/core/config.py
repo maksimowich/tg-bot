@@ -6,12 +6,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 uuid_regex = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 
 
-# class ServiceConfig(BaseModel):
-#     host: str
-#     port: int
-
 class TgConfig(BaseModel):
     bot_token: str
+    channel_id: str
 
 
 class YookassaConfig(BaseModel):
