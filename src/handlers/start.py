@@ -3,7 +3,7 @@ from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.core.config import app_settings
-from src.core.is_subcribed import is_subscribed
+from src.core.is_subscribed import is_subscribed
 from src.keyboards.start_keyboard import get_start_keyboard
 
 
