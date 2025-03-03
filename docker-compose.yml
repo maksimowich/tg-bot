@@ -14,7 +14,9 @@ services:
       timeout: 5s
       retries: 10
     volumes:
-      - pg_data01:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - app-net
 
   tg-bot:
     build:
@@ -28,7 +30,14 @@ services:
     restart: on-failure
     volumes:
       - tg_bot_logs:/app/logs
+    networks:
+      - app-net
 
 volumes:
-  pg_data01:
+  pg_data:
   tg_bot_logs:
+
+networks:
+  app-net:
+    external: true
+    name: app-net
